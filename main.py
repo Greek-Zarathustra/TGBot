@@ -158,7 +158,9 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await start(update, context)
 
 def main():
+    print("Environment variables keys:", list(os.environ.keys()))
     TOKEN = os.environ["BOT_TOKEN"]
+    print("TOKEN is found")
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
