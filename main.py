@@ -4,48 +4,128 @@ import random
 import os
 from dotenv import load_dotenv
 
-# Завантажити змінні середовища
+# Завантажуємо змінні середовища з .env
 load_dotenv()
+
+# Читаємо токен з оточення
 TOKEN = os.environ["BOT_TOKEN"]
 
-# Глобальні словники
-words = {}
-current_word = {}
+# Словник слів для перекладу
+words = {
+    "keep": ["зберігати", "продовжувати"],
+    "hurt": ["пошкодити", "шкодити"],
+    "become": ["ставати"],
+    "begin": ["починати"],
+    "bring": ["приносити"],
+    "buy": ["купляти"],
+    "catch": ["зловити"],
+    "choose": ["вибирати", "вибрати"],
+    "come": ["приходити"],
+    "cry": ["плакати"],
+    "dream": ["мріяти"],
+    "draw": ["малювати"],
+    "drink": ["пити"],
+    "eat": ["їсти"],
+    "fall": ["падати"],
+    "feel": ["відчувати"],
+    "fight": ["битися"],
+    "find": ["знаходити"],
+    "fly": ["літати"],
+    "forget": ["забувати"],
+    "forgive": ["пробачати"],
+    "feed": ["годувати"],
+    "get": ["отримати"],
+    "give": ["давати"],
+    "hide": ["ховати"],
+    "hear": ["чути"],
+    "hit": ["вдаряти"],
+    "hold": ["тримати"],
+    "know": ["знати"],
+    "lay": ["класти"],
+    "learn": ["дізнаватися"],
+    "leave": ["залишати"],
+    "let": ["дозволяти"],
+    "lie": ["брехати"],
+    "lose": ["програвати"],
+    "make": ["робити"],
+    "lend": ["позичати"],
+    "mean": ["мати на увазі"],
+    "meet": ["зустрічати"],
+    "pay": ["платити"],
+    "put": ["класти"],
+    "read": ["читати"],
+    "rid": ["позбуватися"],
+    "say": ["казати"],
+    "see": ["бачити"],
+    "seek": ["шукати"],
+    "sell": ["продавати"],
+    "send": ["посилати"],
+    "shoot": ["стріляти"],
+    "show": ["показувати"],
+    "shut": ["закривати"],
+    "sing": ["співати"],
+    "sit": ["сидіти"],
+    "sleep": ["спати"],
+    "speak": ["говорити"],
+    "spend": ["витрачати"],
+    "stand": ["стояти"],
+    "steal": ["красти"],
+    "swim": ["плавати"],
+    "take": ["брати"],
+    "teach": ["навчати"],
+    "tell": ["розповідати"],
+    "think": ["думати"],
+    "understand": ["розуміти"],
+    "throw": ["кидати"],
+    "wear": ["носити одяг"],
+    "win": ["вигравати"],
+    "write": ["писати"],
+    "look": ["глянути"],
+    "use": ["використовувати"],
+    "want": ["хотіти"],
+    "work": ["працювати"],
+    "call": ["дзвонити"],
+    "try": ["спробувати"],
+    "ask": ["запитати"],
+    "need": ["потребувати"],
+    "seem": ["здається", "здаватися"],
+    "turn": ["повертати"],
+    "follow": ["слідувати"],
+    "help": ["допомагати"],
+    "start": ["починати"],
+    "run": ["бігати"],
+    "move": ["рухатися"],
+    "believe": ["вірити"],
+    "set": ["встановлювати"],
+    "allow": ["дозволяти"],
+    "live": ["жити"],
+    "happen": ["траплятися"],
+    "carry": ["нести"],
+    "talk": ["розмовляти", "говорити"],
+    "appear": ["з'являтися"],
+    "offer": ["пропонувати"]
+}
 
-# Зчитати слова з файлу words.txt
-def load_words(filename="words.txt"):
-    result = {}
-    try:
-        with open(filename, encoding="utf-8") as f:
-            for line in f:
-                if ":" in line:
-                    eng, ukr = line.strip().split(":", 1)
-                    translations = [word.strip().lower() for word in ukr.split(",")]
-                    result[eng.strip().lower()] = translations
-    except Exception as e:
-        print(f"Помилка при завантаженні слів: {e}")
-    return result
+# Зберігаємо поточне слово для кожного користувача
+current_word = {}
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global words
     user_id = update.effective_user.id
     word = random.choice(list(words.keys()))
     current_word[user_id] = word
     await update.message.reply_text(f"Переклади слово: {word}")
 
+# Обробка відповідей користувача
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     answer = update.message.text.strip().lower()
 
-    word = current_word.get(user_id)
+    word = current_word.get(user_id, "")
     correct_answers = words.get(word, [])
 
     if not word or not correct_answers:
-        # Просто обираємо нове слово, як ні в чому не бувало
-        new_word = random.choice(list(words.keys()))
-        current_word[user_id] = new_word
-        await update.message.reply_text(f"👉 Слово для перекладу: {new_word}")
+        await update.message.reply_text("⚠️ Я не знаю, яке слово ти перекладаєш. Напиши /start, щоб почати заново.")
         return
 
     normalized_correct_answers = [ans.strip().lower() for ans in correct_answers]
@@ -90,17 +170,13 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await update.message.reply_text(random.choice(incorrect_responses))
 
-    # Обираємо нове слово
-    new_word = random.choice(list(words.keys()))
-    current_word[user_id] = new_word
-    await update.message.reply_text(f"\n👉 Наступне слово: {new_word}")
+    # Нова спроба
+    await start(update, context)
 
-# Основна функція запуску бота
+# Запуск бота
 def main():
-    global words
-    words = load_words("words.txt")
-
     app = ApplicationBuilder().token(TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
 
