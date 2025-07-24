@@ -1,6 +1,8 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import random
+import os
+
 
 # Словник для тренування — тепер значення це список правильних варіантів
 words = {
@@ -156,7 +158,8 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await start(update, context)
 
 def main():
-    app = ApplicationBuilder().token("7539929609:AAHZQg-gjP1hCyLrIcBWf_b7_jCpdD166mw").build()
+    TOKEN = os.environ["BOT_TOKEN"]
+    app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
