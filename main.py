@@ -12,14 +12,14 @@ TOKEN = os.environ["BOT_TOKEN"]
 
 # Словник слів для перекладу
 words = {
-    "keep": ["зберігати", "продовжувати"],
-    "hurt": ["пошкодити", "шкодити"],
+    "keep": ["зберігати"],
+    "hurt": ["пошкодити"],
     "become": ["ставати"],
     "begin": ["починати"],
     "bring": ["приносити"],
     "buy": ["купляти"],
     "catch": ["зловити"],
-    "choose": ["вибирати", "вибрати"],
+    "choose": ["вибирати"],
     "come": ["приходити"],
     "cry": ["плакати"],
     "dream": ["мріяти"],
@@ -88,7 +88,7 @@ words = {
     "try": ["спробувати"],
     "ask": ["запитати"],
     "need": ["потребувати"],
-    "seem": ["здається", "здаватися"],
+    "seem": ["здається"],
     "turn": ["повертати"],
     "follow": ["слідувати"],
     "help": ["допомагати"],
@@ -101,7 +101,7 @@ words = {
     "live": ["жити"],
     "happen": ["траплятися"],
     "carry": ["нести"],
-    "talk": ["розмовляти", "говорити"],
+    "talk": ["розмовляти"],
     "appear": ["з'являтися"],
     "offer": ["пропонувати"]
 }
@@ -124,9 +124,7 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     word = current_word.get(user_id, "")
     correct_answers = words.get(word, [])
 
-    if not word or not correct_answers:
-        await update.message.reply_text("⚠️ Я не знаю, яке слово ти перекладаєш. Напиши /start, щоб почати заново.")
-        return
+
 
     normalized_correct_answers = [ans.strip().lower() for ans in correct_answers]
 
