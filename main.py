@@ -2,6 +2,11 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import random
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Це завантажить змінні з .env в os.environ
+
+TOKEN = os.environ["BOT_TOKEN"]  # Тут читаємо змінну BOT_TOKEN
 
 
 # Словник для тренування — тепер значення це список правильних варіантів
