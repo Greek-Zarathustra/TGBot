@@ -34,40 +34,66 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     current_word[user_id] = word
     await update.message.reply_text(f"Переклади слово: {word}")
 
-# Обробка відповіді
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     answer = update.message.text.strip().lower()
 
-    word = current_word.get(user_id, "")
+    word = current_word.get(user_id)
     correct_answers = words.get(word, [])
 
     if not word or not correct_answers:
-        await update.message.reply_text("⚠️ Я не знаю, яке слово ти перекладаєш. Напиши /start, щоб почати заново.")
+        # Просто обираємо нове слово, як ні в чому не бувало
+        new_word = random.choice(list(words.keys()))
+        current_word[user_id] = new_word
+        await update.message.reply_text(f"👉 Слово для перекладу: {new_word}")
         return
 
-    if answer in correct_answers:
-        responses = [
+    normalized_correct_answers = [ans.strip().lower() for ans in correct_answers]
+
+    if answer in normalized_correct_answers:
+        correct_responses = [
             "✅ Правильно",
             "🎉 Молодець! Все вірно!",
             "🧠 Красава! Точно в ціль!",
-            "🔥 Та ти розумник!",
+            "🔥 Та ти розумник! В яблучко!",
             "😎 Молодчинка",
             "💪 Так тримати",
             "🤙 Вау та ти крутий",
+            "🤌 Перфекто!",
+            "🤓 Ти що відмінник? Дивовижно!!!",
+            "👌 ОК",
+            "🍾 Відкрию пляшку за тебе",
+            "🍷 П'ю за твоє здоров'я",
+            "🌝 Файно",
+            "🌚 Ніфіга собі, грамотно!",
+            "💙💛 Україна гордитиметься тобою",
         ]
-        await update.message.reply_text(random.choice(responses))
+        await update.message.reply_text(random.choice(correct_responses))
     else:
         correct_display = ", ".join(correct_answers)
         incorrect_responses = [
-            f"❌ Ні, правильно: {correct_display}",
-            f"🙃 Мимо! Треба: {correct_display}",
-            f"🩻 Бот провів МРТ... Там пусто. Правильно: {correct_display}",
+            f"❌ ТАДЕЙ! думай трохи🤡, Правильна відповідь: {correct_display}",
+            f"🙃 Мимо! Було треба: {correct_display}",
+            f"🚫 Не вгадано. Правильно буде: {correct_display}",
+            f"⚠️ Ти серйозно зараз? Правильно: {correct_display}",
+            f"🤬 Фу аж гидко Правильно: {correct_display}",
+            f"🥴 Очі болять від такого... Правильно: {correct_display}",
+            f"⛔ Мені за тебе соромно. Правильно: {correct_display}",
             f"💀 ЩОООО??? Правильно: {correct_display}",
+            f"💩💩💩💩💩 Правильно: {correct_display}",
+            f"🫵🫵🫵 Ось невдаха, ХА ХА Правильно: {correct_display}",
+            f"🩻 Бот провів МРТ... Там пусто. Правильно: {correct_display}",
+            f"⚰️ Твої знання померли. RIP. Правильно: {correct_display}",
+            f"🗿🗿🗿 Нема слів. Правильно: {correct_display}",
+            f"🚫 Тадей не позорся, вчись трохи. Правильно: {correct_display}",
+            f"🧬 ДНК аналіз показав: ген англійської відсутній. Правильно: {correct_display}",
         ]
         await update.message.reply_text(random.choice(incorrect_responses))
 
-    await start(update, context)
+    # Обираємо нове слово
+    new_word = random.choice(list(words.keys()))
+    current_word[user_id] = new_word
+    await update.message.reply_text(f"\n👉 Наступне слово: {new_word}")
 
 # Основна функція запуску бота
 def main():
