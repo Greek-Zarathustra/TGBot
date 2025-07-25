@@ -1,5 +1,5 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import random
 import asyncio
 import os
@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.environ["BOT_TOKEN"]
 
-# Словник слів
+# Встав сюди свій словник:
+# words = {"keep": ["зберігати"], ...}
 words = {
     "keep": ["зберігати", "продовжувати"],
     "hurt": ["пошкодити"],
@@ -108,59 +109,37 @@ words = {
     "add": ["додавати"]
 }
 
-def get_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Пропустити 🔁", callback_data="skip")]
-    ])
-
-async def send_new_word(update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # надсилаємо перше слово
     word = random.choice(list(words.keys()))
     context.user_data["current_word"] = word
-    await update.message.reply_text(
-        f"Переклади слово: {word}",
-        reply_markup=get_keyboard()
-    )
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await send_new_word(update, context)
+    await update.message.reply_text(f"Переклади слово: {word}")
 
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_answer = update.message.text.strip().lower()
+    answer = update.message.text.strip().lower()
     word = context.user_data.get("current_word")
 
     if not word:
-        await send_new_word(update, context)
-        return
+        # якщо раптом нема поточного слова — стартуємо заново
+        return await start(update, context)
 
-    correct = [w.lower() for w in words.get(word, [])]
-
-    if user_answer in correct:
+    correct = [t.lower().strip() for t in words[word]]
+    if answer in correct:
         await update.message.reply_text("✅ Правильно!")
     else:
         await update.message.reply_text(f"❌ Неправильно. Правильна відповідь: {', '.join(words[word])}")
 
-    await asyncio.sleep(1)
-    await send_new_word(update, context)
-
-async def skip_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    word = context.user_data.get("current_word")
-    if word:
-        await query.message.reply_text(f"Правильна відповідь: {', '.join(words[word])}")
-
+    # чекаємо 1 секунду і надсилаємо нове слово
     await asyncio.sleep(1)
     new_word = random.choice(list(words.keys()))
     context.user_data["current_word"] = new_word
-    await query.message.reply_text(f"Переклади слово: {new_word}", reply_markup=get_keyboard())
+    await update.message.reply_text(f"Переклади слово: {new_word}")
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
-    app.add_handler(CallbackQueryHandler(skip_word, pattern="^skip$"))
 
     print("✅ Бот запущено!")
     app.run_polling()
