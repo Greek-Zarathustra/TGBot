@@ -6,13 +6,11 @@ from dotenv import load_dotenv
 
 # Завантажуємо змінні середовища з .env
 load_dotenv()
-
-# Читаємо токен з оточення
 TOKEN = os.environ["BOT_TOKEN"]
 
-# Словник слів для перекладу
+# Словник слів
 words = {
-    "keep": ["зберігати"],
+    "keep": ["зберігати", "продовжувати"],
     "hurt": ["пошкодити"],
     "become": ["ставати"],
     "begin": ["починати"],
@@ -101,81 +99,48 @@ words = {
     "live": ["жити"],
     "happen": ["траплятися"],
     "carry": ["нести"],
-    "talk": ["розмовляти"],
+    "talk": ["розмовляти", "говорити"],
     "appear": ["з'являтися"],
-    "offer": ["пропонувати"]
+    "offer": ["пропонувати"],
+    "expect": ["очікувати"],
+    "suggest": ["пропонувати"],
+    "continue": ["продовжувати"],
+    "add": ["додавати"]
 }
 
-# Зберігаємо поточне слово для кожного користувача
-current_word = {}
-
-# Команда /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+# Команда /start або /next
+async def next_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
     word = random.choice(list(words.keys()))
-    current_word[user_id] = word
+    context.user_data["current_word"] = word
     await update.message.reply_text(f"Переклади слово: {word}")
 
-# Обробка відповідей користувача
+# Обробка відповіді користувача
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
     answer = update.message.text.strip().lower()
+    word = context.user_data.get("current_word")
 
-    word = current_word.get(user_id, "")
+    if not word:
+        await update.message.reply_text("Натисни /start або /next, щоб отримати слово.")
+        return
+
     correct_answers = words.get(word, [])
+    normalized = [ans.lower().strip() for ans in correct_answers]
 
-
-
-    normalized_correct_answers = [ans.strip().lower() for ans in correct_answers]
-
-    if answer in normalized_correct_answers:
-        correct_responses = [
-            "✅ Правильно",
-            "🎉 Молодець! Все вірно!",
-            "🧠 Красава! Точно в ціль!",
-            "🔥 Та ти розумник! В яблучко!",
-            "😎 Молодчинка",
-            "💪 Так тримати",
-            "🤙 Вау та ти крутий",
-            "🤌 Перфекто!",
-            "🤓 Ти що відмінник? Дивовижно!!!",
-            "👌 ОК",
-            "🍾 Відкрию пляшку за тебе",
-            "🍷 П'ю за твоє здоров'я",
-            "🌝 Файно",
-            "🌚 Ніфіга собі, грамотно!",
-            "💙💛 Україна гордитиметься тобою",
-        ]
-        await update.message.reply_text(random.choice(correct_responses))
+    if answer in normalized:
+        await update.message.reply_text("✅ Правильно!")
     else:
         correct_display = ", ".join(correct_answers)
-        incorrect_responses = [
-            f"❌ ТАДЕЙ! думай трохи🤡, Правильна відповідь: {correct_display}",
-            f"🙃 Мимо! Було треба: {correct_display}",
-            f"🚫 Не вгадано. Правильно буде: {correct_display}",
-            f"⚠️ Ти серйозно зараз? Правильно: {correct_display}",
-            f"🤬 Фу аж гидко Правильно: {correct_display}",
-            f"🥴 Очі болять від такого... Правильно: {correct_display}",
-            f"⛔ Мені за тебе соромно. Правильно: {correct_display}",
-            f"💀 ЩОООО??? Правильно: {correct_display}",
-            f"💩💩💩💩💩 Правильно: {correct_display}",
-            f"🫵🫵🫵 Ось невдаха, ХА ХА Правильно: {correct_display}",
-            f"🩻 Бот провів МРТ... Там пусто. Правильно: {correct_display}",
-            f"⚰️ Твої знання померли. RIP. Правильно: {correct_display}",
-            f"🗿🗿🗿 Нема слів. Правильно: {correct_display}",
-            f"🚫 Тадей не позорся, вчись трохи. Правильно: {correct_display}",
-            f"🧬 ДНК аналіз показав: ген англійської відсутній. Правильно: {correct_display}",
-        ]
-        await update.message.reply_text(random.choice(incorrect_responses))
+        await update.message.reply_text(f"❌ Неправильно. Правильна відповідь: {correct_display}")
 
-    # Нова спроба
-    await start(update, context)
+    # Очікуємо, поки користувач викличе /next
+    context.user_data["current_word"] = None
 
 # Запуск бота
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("start", next_word))
+    app.add_handler(CommandHandler("next", next_word))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
 
     print("✅ Бот запущено!")
